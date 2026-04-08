@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00E676;
+  --color-on-primary: #000000;
+  --color-surface: #1C1B1F;
+  --color-background: #121314;
+  --color-outline: #49454F;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-[#E3E2E6] font-sans antialiased overflow-hidden;
+    font-family: 'Google Sans', 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
