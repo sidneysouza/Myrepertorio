@@ -1,0 +1,24 @@
+{
+  "name": "Stitch Music Player",
+  "short_name": "Stitch",
+  "description": "Seu repertório musical com metrônomo e transposição em tempo real.",
+  "theme_color": "#121314",
+  "background_color": "#121314",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/stitch-icon/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/stitch-icon/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
