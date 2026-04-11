@@ -12,6 +12,8 @@
   body {
     @apply bg-background text-[#E3E2E6] font-sans antialiased overflow-hidden;
     font-family: 'Google Sans', 'Inter', sans-serif;
+    touch-action: pan-x pan-y;
+    -webkit-text-size-adjust: 100%;
   }
 }
 
