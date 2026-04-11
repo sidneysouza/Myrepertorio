@@ -1,21 +1,57 @@
-import { Heart, Calendar, ChevronRight, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, Calendar, ChevronRight, User, Search, Loader2 } from 'lucide-react';
 import { Song, Playlist } from '../types';
 import { INITIAL_PLAYLISTS } from '../constants';
+import { searchSongOnCifraClub } from '../services/lyricsService';
 
 interface HomeProps {
   songs: Song[];
   onSelectSong: (song: Song) => void;
+  onAddSong: (song: Song) => void;
 }
 
-export default function Home({ songs, onSelectSong }: HomeProps) {
+export default function Home({ songs, onSelectSong, onAddSong }: HomeProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    const result = await searchSongOnCifraClub(searchQuery);
+    setIsSearching(false);
+
+    if (result) {
+      onAddSong(result as Song);
+      setSearchQuery('');
+    } else {
+      alert('Não foi possível encontrar a música. Tente outro nome.');
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-6 pb-24">
-      <header className="flex justify-between items-center mb-10">
+      <header className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-medium tracking-tight">Repertório</h1>
         <div className="w-12 h-12 rounded-full bg-[#49454F] flex items-center justify-center text-white shadow-lg">
           <User size={24} />
         </div>
       </header>
+
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="mb-10 relative">
+        <input 
+          type="text" 
+          placeholder="Buscar no Cifra Club..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-[#1C1B1F] border border-[#49454F]/30 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
+        />
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+          {isSearching ? <Loader2 size={20} className="animate-spin text-primary" /> : <Search size={20} />}
+        </div>
+      </form>
 
       <section className="mb-10">
         <h2 className="text-xs font-bold text-gray-500 mb-5 uppercase tracking-[0.2em]">Minhas Playlists</h2>

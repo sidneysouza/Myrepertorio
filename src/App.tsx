@@ -14,16 +14,23 @@ import { INITIAL_SONGS } from './constants';
 import { Song } from './types';
 
 export default function App() {
+  const [songs, setSongs] = useState<Song[]>(INITIAL_SONGS);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [activePage, setActivePage] = useState<PageId>('songs');
+
+  const handleAddSong = (newSong: Song) => {
+    setSongs(prev => [newSong, ...prev]);
+    setSelectedSong(newSong);
+  };
 
   const renderPage = () => {
     switch (activePage) {
       case 'songs':
         return (
           <Home 
-            songs={INITIAL_SONGS} 
-            onSelectSong={(song) => setSelectedSong(song)} 
+            songs={songs} 
+            onSelectSong={(song) => setSelectedSong(song)}
+            onAddSong={handleAddSong}
           />
         );
       case 'playlists':

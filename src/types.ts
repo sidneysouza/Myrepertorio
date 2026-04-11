@@ -4,6 +4,7 @@ export interface Song {
   artist: string;
   bpm: number;
   chords: string;
+  lyrics?: string;
 }
 
 export interface Playlist {

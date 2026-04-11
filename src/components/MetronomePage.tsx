@@ -13,75 +13,69 @@ const SOUND_TYPES: { id: MetronomeSoundType; label: string }[] = [
 const MIN_BPM = 40;
 const MAX_BPM = 280;
 
+const TIME_SIGNATURES = [
+  { top: 2, bottom: 4, label: '2/4' },
+  { top: 3, bottom: 4, label: '3/4' },
+  { top: 4, bottom: 4, label: '4/4' },
+  { top: 6, bottom: 8, label: '6/8' },
+  { top: 5, bottom: 4, label: '5/4' },
+  { top: 7, bottom: 8, label: '7/8' },
+];
+
 export default function MetronomePage() {
   const [bpm, setBpm] = useState(120);
   const [soundType, setSoundType] = useState<MetronomeSoundType>('sine');
-  const { isPlaying, toggle, isTick } = useMetronome(bpm, soundType);
+  const [timeSignature, setTimeSignature] = useState(TIME_SIGNATURES[2]); // Default 4/4
+  
+  const { isPlaying, toggle, isTick, currentBeat } = useMetronome(bpm, soundType, timeSignature.top);
   const circleRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const lastAngleRef = useRef<number | null>(null);
+  // ... (rest of the logic remains similar)
 
-  const calculateBpmFromRotation = useCallback((clientX: number, clientY: number) => {
-    if (!circleRef.current) return;
+  const lastYRef = useRef<number | null>(null);
 
-    const rect = circleRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const currentAngle = Math.atan2(clientY - centerY, clientX - centerX);
-    
-    if (lastAngleRef.current !== null) {
-      let deltaAngle = currentAngle - lastAngleRef.current;
-
-      // Handle the wrap-around (e.g., from PI to -PI)
-      if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
-      if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
-
-      // Sensitivity: 1 full rotation (2*PI) = 60 BPM change
-      const sensitivity = 60 / (2 * Math.PI);
-      const bpmChange = deltaAngle * sensitivity;
+  const calculateBpmFromVerticalDrag = useCallback((clientY: number) => {
+    if (lastYRef.current !== null) {
+      const deltaY = lastYRef.current - clientY; // Up is positive change
+      
+      // Sensitivity: 5 pixels = 1 BPM change
+      const sensitivity = 0.2;
+      const bpmChange = deltaY * sensitivity;
 
       setBpm(prev => {
         const nextBpm = prev + bpmChange;
         return Math.min(MAX_BPM, Math.max(MIN_BPM, nextBpm));
       });
     }
-
-    lastAngleRef.current = currentAngle;
+    lastYRef.current = clientY;
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
-    const rect = circleRef.current!.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    lastAngleRef.current = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    lastYRef.current = e.clientY;
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
-    const rect = circleRef.current!.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    lastAngleRef.current = Math.atan2(e.touches[0].clientY - centerY, e.touches[0].clientX - centerX);
+    lastYRef.current = e.touches[0].clientY;
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) calculateBpmFromRotation(e.clientX, e.clientY);
+      if (isDragging) calculateBpmFromVerticalDrag(e.clientY);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (isDragging) {
         e.preventDefault();
-        calculateBpmFromRotation(e.touches[0].clientX, e.touches[0].clientY);
+        calculateBpmFromVerticalDrag(e.touches[0].clientY);
       }
     };
 
     const handleEnd = () => {
       setIsDragging(false);
-      lastAngleRef.current = null;
+      lastYRef.current = null;
     };
 
     if (isDragging) {
@@ -97,7 +91,7 @@ export default function MetronomePage() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging, calculateBpmFromRotation]);
+  }, [isDragging, calculateBpmFromVerticalDrag]);
 
   // SVG Progress Ring calculations
   const radius = 110;
@@ -112,11 +106,45 @@ export default function MetronomePage() {
     <div className="flex-1 flex flex-col items-center justify-center p-6 pb-32 select-none">
       <h1 className="text-4xl font-bold tracking-tight mb-12">Metrônomo</h1>
 
+      {/* Time Signature Selection */}
+      <div className="w-full max-w-xs mb-8">
+        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-3 text-center">Compasso</p>
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          {TIME_SIGNATURES.map((sig) => (
+            <button
+              key={sig.label}
+              onClick={() => setTimeSignature(sig)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                timeSignature.label === sig.label 
+                  ? 'bg-primary text-on-primary border-primary' 
+                  : 'bg-[#1C1B1F] border-[#49454F] text-gray-400'
+              }`}
+            >
+              {sig.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Beat Indicators */}
+      <div className="flex gap-3 mb-12">
+        {Array.from({ length: timeSignature.top }).map((_, i) => (
+          <div 
+            key={i}
+            className={`w-4 h-4 rounded-full transition-all duration-75 ${
+              isPlaying && currentBeat === i
+                ? i === 0 ? 'bg-white scale-125 shadow-[0_0_15px_rgba(255,255,255,0.5)]' : 'bg-primary scale-110'
+                : 'bg-[#1C1B1F] border border-[#49454F]'
+            }`}
+          />
+        ))}
+      </div>
+
       <div 
         ref={circleRef}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
-        className="relative w-72 h-72 flex items-center justify-center mb-12 cursor-pointer group"
+        className={`relative w-72 h-72 flex items-center justify-center mb-12 cursor-ns-resize group transition-transform ${isDragging ? 'scale-95' : ''}`}
       >
         {/* Background Circle */}
         <svg className="absolute inset-0 w-full h-full -rotate-90">
@@ -142,6 +170,12 @@ export default function MetronomePage() {
             className="transition-all duration-75"
           />
         </svg>
+
+        {/* Drag Hints */}
+        <div className="absolute inset-0 flex flex-col items-center justify-between py-8 pointer-events-none opacity-0 group-hover:opacity-20 transition-opacity">
+          <div className="w-8 h-1 bg-white rounded-full" />
+          <div className="w-8 h-1 bg-white rounded-full" />
+        </div>
 
         {/* Pulsing Visualizer */}
         <div className={`absolute inset-0 rounded-full transition-all duration-75 ${

@@ -21,11 +21,13 @@ const SOUND_TYPES: { id: MetronomeSoundType; label: string }[] = [
 export default function Player({ song, onClose }: PlayerProps) {
   const [keyOffset, setKeyOffset] = useState(0);
   const [soundType, setSoundType] = useState<MetronomeSoundType>('sine');
-  const { isPlaying, toggle, stop, isTick } = useMetronome(song?.bpm || 120, soundType);
+  const [viewMode, setViewMode] = useState<'chords' | 'lyrics'>('chords');
+  const { isPlaying, toggle, stop, isTick, currentBeat } = useMetronome(song?.bpm || 120, soundType);
 
   useEffect(() => {
     setKeyOffset(0);
     stop();
+    setViewMode('chords');
   }, [song, stop]);
 
   if (!song) return null;
@@ -68,24 +70,50 @@ export default function Player({ song, onClose }: PlayerProps) {
               </button>
             </div>
 
-            <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-              <MoreVertical size={24} />
-            </button>
+            <div className="flex bg-[#1C1B1F] rounded-full p-1 border border-[#49454F]">
+              <button 
+                onClick={() => setViewMode('chords')}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${viewMode === 'chords' ? 'bg-primary text-on-primary' : 'text-gray-500'}`}
+              >
+                CIFRA
+              </button>
+              <button 
+                onClick={() => setViewMode('lyrics')}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${viewMode === 'lyrics' ? 'bg-primary text-on-primary' : 'text-gray-500'}`}
+              >
+                LETRA
+              </button>
+            </div>
           </nav>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold tracking-tight">{song.title}</h2>
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold tracking-tight truncate">{song.title}</h2>
             <p className="text-primary text-lg font-medium">{song.artist}</p>
           </div>
 
-          <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col gap-4 mb-6">
             <div className="bg-[#1C1B1F] rounded-[28px] p-5 border border-[#49454F]/30">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Metrônomo</p>
-                  <p className="font-bold text-2xl">
-                    {song.bpm} <span className="text-xs text-gray-500">BPM</span>
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Metrônomo</p>
+                    <p className="font-bold text-2xl">
+                      {song.bpm} <span className="text-xs text-gray-500">BPM</span>
+                    </p>
+                  </div>
+                  {/* Beat Indicators */}
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div 
+                        key={i}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          isPlaying && currentBeat === i 
+                            ? i === 0 ? 'bg-white scale-125' : 'bg-primary scale-110'
+                            : 'bg-gray-800'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <button 
                   onClick={toggle}
@@ -119,10 +147,16 @@ export default function Player({ song, onClose }: PlayerProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto rounded-[32px] bg-[#1C1B1F]/50 p-6 border border-[#49454F]/20 mb-4">
-            <pre 
-              className="text-gray-300 whitespace-pre-wrap font-sans leading-relaxed text-lg"
-              dangerouslySetInnerHTML={{ __html: formatChords(transposedChords) }}
-            />
+            {viewMode === 'chords' ? (
+              <pre 
+                className="text-gray-300 whitespace-pre-wrap font-sans leading-relaxed text-lg"
+                dangerouslySetInnerHTML={{ __html: formatChords(transposedChords) }}
+              />
+            ) : (
+              <div className="text-gray-300 whitespace-pre-wrap font-sans leading-relaxed text-lg">
+                {song.lyrics || "Letra não disponível."}
+              </div>
+            )}
           </div>
         </motion.div>
       )}
