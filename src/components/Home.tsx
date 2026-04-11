@@ -13,20 +13,26 @@ interface HomeProps {
 export default function Home({ songs, onSelectSong, onAddSong }: HomeProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
-    const result = await searchSongOnCifraClub(searchQuery);
-    setIsSearching(false);
-
-    if (result) {
-      onAddSong(result as Song);
-      setSearchQuery('');
-    } else {
-      alert('Não foi possível encontrar a música. Tente outro nome.');
+    setError(null);
+    try {
+      const result = await searchSongOnCifraClub(searchQuery);
+      if (result) {
+        onAddSong(result as Song);
+        setSearchQuery('');
+      } else {
+        setError('Não foi possível encontrar a música. Tente outro nome.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao realizar a busca.');
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -39,8 +45,16 @@ export default function Home({ songs, onSelectSong, onAddSong }: HomeProps) {
         </div>
       </header>
 
+      {/* API Key Warning */}
+      {!process.env.GEMINI_API_KEY && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400">
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <p className="text-xs font-bold">GEMINI_API_KEY não detectada. A busca não funcionará.</p>
+        </div>
+      )}
+
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="mb-10 relative">
+      <form onSubmit={handleSearch} className="mb-6 relative">
         <input 
           type="text" 
           placeholder="Buscar no Cifra Club..." 
@@ -52,6 +66,12 @@ export default function Home({ songs, onSelectSong, onAddSong }: HomeProps) {
           {isSearching ? <Loader2 size={20} className="animate-spin text-primary" /> : <Search size={20} />}
         </div>
       </form>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-medium">
+          {error}
+        </div>
+      )}
 
       <section className="mb-10">
         <h2 className="text-xs font-bold text-gray-500 mb-5 uppercase tracking-[0.2em]">Minhas Playlists</h2>
