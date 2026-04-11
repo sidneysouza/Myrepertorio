@@ -5,6 +5,7 @@ export interface Song {
   bpm: number;
   chords: string;
   lyrics?: string;
+  youtubeId?: string;
 }
 
 export interface Playlist {

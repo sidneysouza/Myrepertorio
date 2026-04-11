@@ -21,6 +21,14 @@ export function transpose(text: string, steps: number): string {
 }
 
 export function formatChords(text: string): string {
-  // Replace [Chord] with a styled span
-  return text.replace(/\[(.*?)\]/g, '<span class="text-primary font-bold bg-primary/10 px-1 rounded mx-0.5">$1</span>');
+  // Replace [Chord] with a styled span that is clickable
+  // We use a specific class to identify chords for the dictionary
+  return text.replace(/\[(.*?)\]/g, '<span class="chord-trigger text-primary font-bold cursor-pointer hover:underline" data-chord="$1">$1</span>');
+}
+
+export function extractUniqueChords(text: string): string[] {
+  const matches = text.match(/\[(.*?)\]/g);
+  if (!matches) return [];
+  const chords = matches.map(m => m.replace(/[\[\]]/g, ''));
+  return Array.from(new Set(chords));
 }
