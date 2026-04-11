@@ -17,6 +17,14 @@ function getAI() {
 export async function searchSongOnCifraClub(query: string): Promise<Partial<Song> | null> {
   try {
     const ai = getAI();
+    
+    // Debug log to check if key is present (masked)
+    const key = process.env.GEMINI_API_KEY;
+    console.log("Iniciando busca Gemini. Chave presente:", !!key);
+    if (key) {
+      console.log("Prefixo da chave:", key.substring(0, 5) + "...");
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Encontre a letra e as cifras da música "${query}" no site Cifra Club. 
