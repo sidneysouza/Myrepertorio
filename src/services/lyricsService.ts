@@ -1,10 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Song } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY não configurada. A busca não funcionará no GitHub Pages sem a chave.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function searchSongOnCifraClub(query: string): Promise<Partial<Song> | null> {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Encontre a letra e as cifras da música "${query}" no site Cifra Club. 

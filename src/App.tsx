@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Home from './components/Home';
 import Player from './components/Player';
 import BottomNav, { PageId } from './components/BottomNav';
@@ -17,6 +17,10 @@ export default function App() {
   const [songs, setSongs] = useState<Song[]>(INITIAL_SONGS);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [activePage, setActivePage] = useState<PageId>('songs');
+
+  useEffect(() => {
+    console.log("Stitch Music Player iniciado");
+  }, []);
 
   const handleAddSong = (newSong: Song) => {
     setSongs(prev => [newSong, ...prev]);
