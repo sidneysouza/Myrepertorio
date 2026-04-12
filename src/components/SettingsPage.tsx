@@ -51,7 +51,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="mt-12 text-center">
-        <p className="text-xs text-gray-600 font-bold uppercase tracking-widest">Stitch Player v1.0.0</p>
+        <p className="text-xs text-gray-600 font-bold uppercase tracking-widest">Stitch Player v1.1.1</p>
+        <p className="text-[10px] text-gray-700 mt-1">Model: Gemini 3 Flash</p>
       </div>
     </div>
   );

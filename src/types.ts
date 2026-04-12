@@ -6,6 +6,7 @@ export interface Song {
   chords: string;
   lyrics?: string;
   youtubeId?: string;
+  playlistIds?: string[];
 }
 
 export interface Playlist {

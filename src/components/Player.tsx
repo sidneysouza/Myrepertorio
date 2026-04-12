@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, MoreVertical, Play, Square, Minus, Plus, Volume2, Youtube, Music, X, Info } from 'lucide-react';
-import { Song } from '../types';
+import { Song, Playlist } from '../types';
 import { transpose, formatChords, extractUniqueChords } from '../utils';
 import { useMetronome, MetronomeSoundType } from '../hooks/useMetronome';
 import YouTube, { YouTubeProps } from 'react-youtube';
 
 interface PlayerProps {
   song: Song | null;
+  playlists: Playlist[];
   onClose: () => void;
+  onTogglePlaylist: (songId: string, playlistId: string) => void;
 }
 
 const SOUND_TYPES: { id: MetronomeSoundType; label: string }[] = [
@@ -19,7 +21,7 @@ const SOUND_TYPES: { id: MetronomeSoundType; label: string }[] = [
   { id: 'woodblock', label: 'Madeira' },
 ];
 
-export default function Player({ song, onClose }: PlayerProps) {
+export default function Player({ song, playlists, onClose, onTogglePlaylist }: PlayerProps) {
   const [keyOffset, setKeyOffset] = useState(0);
   const [soundType, setSoundType] = useState<MetronomeSoundType>('sine');
   const [viewMode, setViewMode] = useState<'chords' | 'lyrics'>('chords');
@@ -27,6 +29,7 @@ export default function Player({ song, onClose }: PlayerProps) {
   const [youtubeProgress, setYoutubeProgress] = useState(0);
   const [youtubeDuration, setYoutubeDuration] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
   
   const { isPlaying, toggle, stop, isTick, currentBeat } = useMetronome(song?.bpm || 120, soundType);
   const youtubePlayerRef = useRef<any>(null);
@@ -37,6 +40,7 @@ export default function Player({ song, onClose }: PlayerProps) {
     setIsYoutubePlaying(false);
     setViewMode('chords');
     setYoutubeProgress(0);
+    setShowPlaylistMenu(false);
   }, [song, stop]);
 
   useEffect(() => {
@@ -149,8 +153,16 @@ export default function Player({ song, onClose }: PlayerProps) {
           </nav>
 
           <div className="mb-4 flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight truncate max-w-[200px]">{song.title}</h2>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-2xl font-bold tracking-tight truncate max-w-[200px]">{song.title}</h2>
+                <button 
+                  onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
+                  className={`p-1.5 rounded-lg transition-colors ${showPlaylistMenu ? 'bg-primary text-on-primary' : 'text-gray-500 hover:text-primary'}`}
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
               <p className="text-primary text-sm font-medium">{song.artist}</p>
             </div>
             
@@ -182,6 +194,40 @@ export default function Player({ song, onClose }: PlayerProps) {
               )}
             </div>
           </div>
+
+          {/* Playlist Quick Menu */}
+          <AnimatePresence>
+            {showPlaylistMenu && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-4 bg-[#1C1B1F] rounded-2xl border border-primary/30 p-4 overflow-hidden"
+              >
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Adicionar à Playlist</p>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  {playlists.length === 0 ? (
+                    <p className="text-xs text-gray-600 italic">Nenhuma playlist criada.</p>
+                  ) : (
+                    playlists.map(p => {
+                      const isSelected = song.playlistIds?.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => onTogglePlaylist(song.id, p.id)}
+                          className={`px-4 py-2 rounded-xl border text-xs font-bold whitespace-nowrap transition-all ${
+                            isSelected ? 'bg-primary/20 border-primary text-primary' : 'bg-[#121314] border-[#49454F]/30 text-gray-500'
+                          }`}
+                        >
+                          {p.name}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex flex-col gap-4 mb-4">
             <div className="bg-[#1C1B1F] rounded-[28px] p-4 border border-[#49454F]/30">

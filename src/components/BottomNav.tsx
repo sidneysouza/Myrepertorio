@@ -24,12 +24,6 @@ export default function BottomNav({ activePage, onPageChange }: BottomNavProps) 
         onClick={() => onPageChange('playlists')}
       />
       
-      <div className="relative">
-        <button className="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center -translate-y-6 shadow-2xl active:scale-90 transition-transform">
-          <Plus size={32} strokeWidth={3} />
-        </button>
-      </div>
-
       <NavItem 
         icon={<Timer size={24} />} 
         label="Metrônomo" 
